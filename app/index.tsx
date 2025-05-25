@@ -1,4 +1,11 @@
-import { Button, FlatList, Text, View, StyleSheet } from "react-native";
+import {
+  Button,
+  FlatList,
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import useAndroidBluetoothPermissions from "@/hooks/useAndroidBluetoothPermissions";
 import { useCallback, useState } from "react";
 import { Device } from "react-native-ble-plx";
@@ -8,9 +15,12 @@ import {
 } from "@/ble/BleManager";
 import type { ListRenderItem } from "@react-native/virtualized-lists";
 import { decodeAdvertisementData } from "@/utils/dataDecoding";
+import { useRouter } from "expo-router";
 
 export default function Index() {
   useAndroidBluetoothPermissions();
+
+  const router = useRouter();
 
   const [devices, setDevices] = useState<Device[]>([]);
 
@@ -47,20 +57,50 @@ export default function Index() {
     bleManager.stopScan();
   }, []);
 
-  const renderItem = useCallback<ListRenderItem<Device>>(({ item }) => {
-    const serviceData = item.serviceData?.[FULL_DEVICE_ADVERTISEMENT_SERVICE];
-    const mac = serviceData
-      ? decodeAdvertisementData(serviceData).mac
-      : "Unknown";
-    return (
-      <View style={styles.deviceItem}>
-        <Text>{`Name: ${item.name}`}</Text>
-        <Text>{`ID: ${item.id}`}</Text>
-        <Text>{`MAC: ${mac}`}</Text>
-        <Text>{`RSSI: ${item.rssi}`}</Text>
-      </View>
-    );
-  }, []);
+  const onDeviceSelected = useCallback<
+    (params: { id: string; name: string; mac: string }) => void
+  >(
+    ({ id, name, mac }) => {
+      stopScan();
+
+      router.push({
+        pathname: `/device/${id}`,
+        params: {
+          name: name || "Unknown",
+          mac: mac,
+        },
+      });
+    },
+    [router, stopScan],
+  );
+
+  const renderItem = useCallback<ListRenderItem<Device>>(
+    ({ item }) => {
+      const serviceData = item.serviceData?.[FULL_DEVICE_ADVERTISEMENT_SERVICE];
+      const mac = serviceData
+        ? decodeAdvertisementData(serviceData).mac
+        : "Unknown";
+
+      return (
+        <TouchableOpacity
+          style={styles.deviceItem}
+          onPress={() =>
+            onDeviceSelected({
+              id: item.id,
+              name: item.name || "Unknown",
+              mac,
+            })
+          }
+        >
+          <Text>{`Name: ${item.name}`}</Text>
+          <Text>{`ID: ${item.id}`}</Text>
+          <Text>{`MAC: ${mac}`}</Text>
+          <Text>{`RSSI: ${item.rssi}`}</Text>
+        </TouchableOpacity>
+      );
+    },
+    [onDeviceSelected],
+  );
 
   return (
     <View style={styles.container}>

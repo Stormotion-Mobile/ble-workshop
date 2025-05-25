@@ -44,6 +44,27 @@ class BLEManager {
   stopScan() {
     this.manager.stopDeviceScan();
   }
+
+  async connectToDevice(deviceId: string): Promise<Device> {
+    try {
+      const device = await this.manager.connectToDevice(deviceId);
+      console.log("Connected to device:", device.id);
+      return device;
+    } catch (error) {
+      console.error("Failed to connect to device", error);
+      throw error;
+    }
+  }
+
+  async cancelDeviceConnection(deviceId: string): Promise<void> {
+    try {
+      await this.manager.cancelDeviceConnection(deviceId);
+      console.log("Cancelled connection to device:", deviceId);
+    } catch (error) {
+      console.error("Failed to cancel device connection", error);
+      throw error;
+    }
+  }
 }
 
 export const bleManager = new BLEManager();
