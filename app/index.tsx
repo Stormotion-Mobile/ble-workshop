@@ -1,11 +1,4 @@
-import {
-  Button,
-  FlatList,
-  Text,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+import { StyleSheet, FlatList } from "react-native";
 import useAndroidBluetoothPermissions from "@/hooks/useAndroidBluetoothPermissions";
 import { useCallback, useState } from "react";
 import { Device } from "react-native-ble-plx";
@@ -16,6 +9,15 @@ import {
 import type { ListRenderItem } from "@react-native/virtualized-lists";
 import { decodeAdvertisementData } from "@/utils/dataDecoding";
 import { useRouter } from "expo-router";
+import {
+  Button,
+  Card,
+  Text,
+  Surface,
+  ActivityIndicator,
+  Divider,
+} from "react-native-paper";
+import { View } from "react-native";
 
 export default function Index() {
   useAndroidBluetoothPermissions();
@@ -23,10 +25,12 @@ export default function Index() {
   const router = useRouter();
 
   const [devices, setDevices] = useState<Device[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
 
   const startScan = useCallback(() => {
     console.log("Starting BLE scan");
     setDevices([]);
+    setIsScanning(true);
 
     bleManager.startScan((device) => {
       console.log("BLE device found", device);
@@ -53,7 +57,7 @@ export default function Index() {
 
   const stopScan = useCallback(() => {
     console.log("Stopping BLE scan");
-    // stop scanning for BLE devices
+    setIsScanning(false);
     bleManager.stopScan();
   }, []);
 
@@ -82,7 +86,7 @@ export default function Index() {
         : "Unknown";
 
       return (
-        <TouchableOpacity
+        <Card
           style={styles.deviceItem}
           onPress={() =>
             onDeviceSelected({
@@ -91,40 +95,107 @@ export default function Index() {
               mac,
             })
           }
+          mode="outlined"
         >
-          <Text>{`Name: ${item.name}`}</Text>
-          <Text>{`ID: ${item.id}`}</Text>
-          <Text>{`MAC: ${mac}`}</Text>
-          <Text>{`RSSI: ${item.rssi}`}</Text>
-        </TouchableOpacity>
+          <Card.Content>
+            <Text variant="titleMedium">{item.name || "Unknown Device"}</Text>
+            <Text variant="bodyMedium">ID: {item.id}</Text>
+            <Text variant="bodyMedium">MAC: {mac}</Text>
+            <Text variant="bodyMedium">Signal: {item.rssi} dBm</Text>
+          </Card.Content>
+        </Card>
       );
     },
     [onDeviceSelected],
   );
 
   return (
-    <View style={styles.container}>
+    <Surface style={styles.container}>
+      <Text variant="headlineMedium" style={styles.title}>
+        Bluetooth Devices
+      </Text>
+
+      {isScanning && (
+        <View style={styles.scanningContainer}>
+          <ActivityIndicator animating={true} />
+          <Text variant="bodyMedium">Scanning for devices...</Text>
+        </View>
+      )}
+
       <FlatList
         data={devices}
         renderItem={renderItem}
         keyExtractor={(device) => device.id}
+        style={styles.list}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            {isScanning
+              ? "None found yet. Scanning for devices..."
+              : "No devices found. Start scanning to discover nearby devices."}
+          </Text>
+        }
       />
-      <Button title={"Start scan"} onPress={startScan} />
-      <Button title={"Stop scan"} onPress={stopScan} />
-    </View>
+
+      <Divider style={styles.divider} />
+
+      <View style={styles.buttonContainer}>
+        <Button
+          mode="contained"
+          onPress={startScan}
+          disabled={isScanning}
+          icon="bluetooth"
+        >
+          Start Scan
+        </Button>
+        <Button
+          mode="outlined"
+          onPress={stopScan}
+          disabled={!isScanning}
+          style={styles.stopButton}
+        >
+          Stop Scan
+        </Button>
+      </View>
+    </Surface>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    padding: 16,
+  },
+  title: {
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  list: {
+    flex: 1,
   },
   deviceItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "lightgray",
+    marginBottom: 8,
+  },
+  buttonContainer: {
+    marginVertical: 16,
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+  stopButton: {
+    marginLeft: 8,
+  },
+  divider: {
+    marginVertical: 8,
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 32,
+    opacity: 0.6,
+  },
+  scanningContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+    gap: 8,
   },
 });

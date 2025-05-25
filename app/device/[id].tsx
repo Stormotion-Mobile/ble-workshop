@@ -1,7 +1,16 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Button, StyleSheet, Text, View } from "react-native";
+import { StyleSheet } from "react-native";
 import { bleManager } from "@/ble/BleManager";
 import { useCallback, useEffect, useState } from "react";
+import {
+  Button,
+  Text,
+  Surface,
+  Card,
+  Divider,
+  IconButton,
+} from "react-native-paper";
+import { View } from "react-native";
 
 export default function DeviceScreen() {
   const { id, name, mac } = useLocalSearchParams();
@@ -55,64 +64,116 @@ export default function DeviceScreen() {
   }, [id, isConnected]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Device Connection</Text>
-      <Text style={styles.deviceInfo}>Name: {name || "Unknown"}</Text>
-      <Text style={styles.deviceInfo}>Device ID: {id}</Text>
-      <Text style={styles.deviceInfo}>MAC: {mac}</Text>
+    <Surface style={styles.container}>
+      <View style={styles.header}>
+        <IconButton
+          icon="arrow-left"
+          mode="contained"
+          onPress={() => router.back()}
+        />
+        <Text variant="headlineMedium" style={styles.title}>
+          Device Details
+        </Text>
+      </View>
 
-      {error && <Text style={styles.error}>{error}</Text>}
+      <Card style={styles.infoCard}>
+        <Card.Content>
+          <Text variant="titleLarge" style={styles.deviceName}>
+            {name || "Unknown Device"}
+          </Text>
+          <Divider style={styles.divider} />
+          <Text variant="bodyLarge">Device ID: {id}</Text>
+          <Text variant="bodyLarge">MAC: {mac}</Text>
+        </Card.Content>
+      </Card>
 
-      <View style={styles.buttonContainer}>
-        {!isConnected ? (
+      {error && (
+        <Card style={styles.errorCard}>
+          <Card.Content>
+            <Text variant="bodyMedium" style={styles.errorText}>
+              {error}
+            </Text>
+          </Card.Content>
+        </Card>
+      )}
+
+      <View style={styles.connectionContainer}>
+        {isConnected ? (
+          <View style={styles.connectedStatus}>
+            <Text variant="titleMedium" style={styles.connectedText}>
+              <IconButton icon="bluetooth-connect" size={20} /> Connected
+            </Text>
+            <Button
+              mode="outlined"
+              onPress={disconnectFromDevice}
+              icon="bluetooth-off"
+              style={styles.actionButton}
+            >
+              Disconnect
+            </Button>
+          </View>
+        ) : (
           <Button
-            title={isConnecting ? "Connecting..." : "Connect to Device"}
+            mode="contained"
             onPress={connectToDevice}
             disabled={isConnecting}
-          />
-        ) : (
-          <View>
-            <Text style={styles.connectedText}>Connected</Text>
-            <Button title="Disconnect" onPress={disconnectFromDevice} />
-          </View>
+            loading={isConnecting}
+            icon="bluetooth"
+            style={styles.actionButton}
+          >
+            {isConnecting ? "Connecting..." : "Connect to Device"}
+          </Button>
         )}
-
-        <Button title="Go Back" onPress={() => router.back()} />
       </View>
-    </View>
+    </Surface>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-    backgroundColor: "#fff",
+    padding: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 20,
   },
-  deviceInfo: {
-    fontSize: 16,
-    marginBottom: 10,
+  title: {
+    flex: 1,
+    textAlign: "center",
+    marginRight: 40,
   },
-  buttonContainer: {
+  infoCard: {
+    marginBottom: 16,
+    elevation: 2,
+  },
+  deviceName: {
+    marginBottom: 8,
+  },
+  divider: {
+    marginVertical: 12,
+  },
+  errorCard: {
+    backgroundColor: "#ffeeee",
+    marginBottom: 16,
+  },
+  errorText: {
+    color: "#d32f2f",
+  },
+  connectionContainer: {
     marginTop: 20,
-    width: "100%",
-    gap: 10,
+  },
+  connectedStatus: {
+    alignItems: "center",
   },
   connectedText: {
-    color: "green",
-    fontSize: 18,
-    marginBottom: 10,
-    textAlign: "center",
+    color: "#4caf50",
+    marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
   },
-  error: {
-    color: "red",
-    marginBottom: 10,
+  actionButton: {
+    marginVertical: 8,
   },
 });
