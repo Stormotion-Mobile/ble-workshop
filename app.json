@@ -11,9 +11,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stormotion.bleworkshop",
-        "infoPlist": {
-            "NSBluetoothAlwaysUsageDescription": "This app uses Bluetooth to connect to BLE devices"
-        }
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "This app uses Bluetooth to connect to BLE devices"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -33,7 +33,9 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "react-native-ble-plx"
+      "react-native-ble-plx",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
