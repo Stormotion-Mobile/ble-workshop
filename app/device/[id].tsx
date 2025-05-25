@@ -1,7 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet } from "react-native";
-import { bleManager } from "@/ble/BleManager";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Button,
   Text,
@@ -11,6 +10,7 @@ import {
   IconButton,
 } from "react-native-paper";
 import { View } from "react-native";
+import { DeviceHelper } from "@/ble/DeviceHelper";
 
 export default function DeviceScreen() {
   const { id, name, mac } = useLocalSearchParams();
@@ -19,6 +19,8 @@ export default function DeviceScreen() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const connectedDevice = useRef<DeviceHelper | null>(null);
+
   const connectToDevice = useCallback(async () => {
     if (!id) return;
 
@@ -26,13 +28,15 @@ export default function DeviceScreen() {
       setIsConnecting(true);
       setError(null);
 
-      const device = await bleManager.connectToDevice(id as string);
+      const device = await DeviceHelper.connectToDeviceById(id as string);
       console.log("Connected to device:", device);
 
-      // Discover services and characteristics
-      await device.discoverAllServicesAndCharacteristics();
+      const climate = await device.readClimate();
+
+      console.log("Climate data:", climate);
 
       setIsConnected(true);
+      connectedDevice.current = device;
     } catch (err) {
       console.error("Connection error:", err);
       setError(
@@ -47,21 +51,20 @@ export default function DeviceScreen() {
     if (!id) return;
 
     try {
-      await bleManager.cancelDeviceConnection(id as string);
+      await connectedDevice.current?.disconnect();
       setIsConnected(false);
     } catch (err) {
       console.error("Disconnection error:", err);
+    } finally {
+      connectedDevice.current = null;
     }
   }, [id]);
 
-  // Clean up connection when leaving screen
   useEffect(() => {
     return () => {
-      if (isConnected && id) {
-        bleManager.cancelDeviceConnection(id as string).catch(console.error);
-      }
+      connectedDevice.current?.disconnect();
     };
-  }, [id, isConnected]);
+  }, []);
 
   return (
     <Surface style={styles.container}>

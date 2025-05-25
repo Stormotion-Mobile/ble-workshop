@@ -3,9 +3,9 @@ import useAndroidBluetoothPermissions from "@/hooks/useAndroidBluetoothPermissio
 import { useCallback, useState } from "react";
 import { Device } from "react-native-ble-plx";
 import {
-  bleManager,
+  bleManagerHelper,
   FULL_DEVICE_ADVERTISEMENT_SERVICE,
-} from "@/ble/BleManager";
+} from "@/ble/BleManagerHelper";
 import type { ListRenderItem } from "@react-native/virtualized-lists";
 import { decodeAdvertisementData } from "@/utils/dataDecoding";
 import { useRouter } from "expo-router";
@@ -32,7 +32,7 @@ export default function Index() {
     setDevices([]);
     setIsScanning(true);
 
-    bleManager.startScan((device) => {
+    bleManagerHelper.startScan((device) => {
       console.log("BLE device found", device);
 
       if (device) {
@@ -58,7 +58,7 @@ export default function Index() {
   const stopScan = useCallback(() => {
     console.log("Stopping BLE scan");
     setIsScanning(false);
-    bleManager.stopScan();
+    bleManagerHelper.stopScan();
   }, []);
 
   const onDeviceSelected = useCallback<

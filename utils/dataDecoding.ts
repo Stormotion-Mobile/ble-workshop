@@ -22,3 +22,34 @@ export function decodeAdvertisementData(
     mac: macFormatted.toUpperCase(),
   };
 }
+
+export function decodeBatteryLevelData(
+  batteryLevelData: string,
+): number | null {
+  const data = base64ToBuffer(batteryLevelData);
+
+  if (data.length < 1) {
+    console.error("Invalid battery level data length");
+    return null;
+  }
+
+  return data.readUInt8(0);
+}
+
+export function decodeTemperatureData(
+  temperatureData: string,
+): [number, number] | null {
+  const data = base64ToBuffer(temperatureData);
+
+  console.log("Decoding temperature data:", data);
+
+  if (data.length < 4) {
+    console.error("Invalid temperature data length");
+    return null;
+  }
+
+  const temperature = data.readInt16LE(0) / 100;
+  const humidity = data.readUInt8(2);
+
+  return [temperature, humidity];
+}

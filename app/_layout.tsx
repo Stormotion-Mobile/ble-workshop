@@ -12,7 +12,7 @@ export default function RootLayout() {
       backgroundColor: theme.colors.elevation.level1,
       ...styles.container,
     }),
-    [theme.colors.background],
+    [theme.colors.elevation.level1],
   );
 
   return (
