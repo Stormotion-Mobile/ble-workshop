@@ -81,9 +81,26 @@ export default function DeviceScreen() {
 
       <Card style={styles.infoCard}>
         <Card.Content>
-          <Text variant="titleLarge" style={styles.deviceName}>
-            {name || "Unknown Device"}
-          </Text>
+          <View style={styles.deviceNameRow}>
+            {isConnected ? (
+              <IconButton
+                icon="bluetooth-connect"
+                size={20}
+                iconColor="#4caf50"
+                style={styles.connectionIcon}
+              />
+            ) : (
+              <IconButton
+                icon="bluetooth-off"
+                size={20}
+                iconColor="#9e9e9e"
+                style={styles.connectionIcon}
+              />
+            )}
+            <Text variant="titleLarge" style={styles.deviceName}>
+              {name || "Unknown Device"}
+            </Text>
+          </View>
           <Divider style={styles.divider} />
           <Text variant="bodyLarge">Device ID: {id}</Text>
           <Text variant="bodyLarge">MAC: {mac}</Text>
@@ -102,19 +119,14 @@ export default function DeviceScreen() {
 
       <View style={styles.connectionContainer}>
         {isConnected ? (
-          <View style={styles.connectedStatus}>
-            <Text variant="titleMedium" style={styles.connectedText}>
-              <IconButton icon="bluetooth-connect" size={20} /> Connected
-            </Text>
-            <Button
-              mode="outlined"
-              onPress={disconnectFromDevice}
-              icon="bluetooth-off"
-              style={styles.actionButton}
-            >
-              Disconnect
-            </Button>
-          </View>
+          <Button
+            mode="outlined"
+            onPress={disconnectFromDevice}
+            icon="bluetooth-off"
+            style={styles.actionButton}
+          >
+            Disconnect
+          </Button>
         ) : (
           <Button
             mode="contained"
@@ -151,8 +163,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 2,
   },
-  deviceName: {
+  deviceNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
+  },
+  connectionIcon: {
+    margin: 0,
+    padding: 0,
+  },
+  deviceName: {
+    flex: 1,
   },
   divider: {
     marginVertical: 12,
@@ -166,15 +187,6 @@ const styles = StyleSheet.create({
   },
   connectionContainer: {
     marginTop: 20,
-  },
-  connectedStatus: {
-    alignItems: "center",
-  },
-  connectedText: {
-    color: "#4caf50",
-    marginBottom: 16,
-    flexDirection: "row",
-    alignItems: "center",
   },
   actionButton: {
     marginVertical: 8,
