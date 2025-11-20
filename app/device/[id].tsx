@@ -10,7 +10,8 @@ import {
   IconButton,
 } from "react-native-paper";
 import { View } from "react-native";
-import { DeviceHelper } from "@/ble/DeviceHelper";
+import { Climate, DeviceHelper } from "@/ble/DeviceHelper";
+import { SevenSegmentDisplay } from "@/components/SevenSegmentDisplay";
 
 export default function DeviceScreen() {
   const { id, name, mac } = useLocalSearchParams();
@@ -18,6 +19,8 @@ export default function DeviceScreen() {
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [currentClimate, setCurrentClimate] = useState<Climate | null>(null);
 
   const connectedDevice = useRef<DeviceHelper | null>(null);
 
@@ -37,6 +40,8 @@ export default function DeviceScreen() {
 
       setIsConnected(true);
       connectedDevice.current = device;
+
+      setCurrentClimate(climate || null);
     } catch (err) {
       console.error("Connection error:", err);
       setError(
@@ -139,6 +144,25 @@ export default function DeviceScreen() {
             {isConnecting ? "Connecting..." : "Connect to Device"}
           </Button>
         )}
+
+        <Divider style={styles.divider} />
+
+        {currentClimate && (
+          <View style={styles.climateContainer}>
+            <Text variant="titleMedium">Current Climate Data:</Text>
+            <View style={styles.climateValue}>
+              <Text style={styles.climateLabel}>Temperature (°C):</Text>
+              <SevenSegmentDisplay
+                value={currentClimate.temperature.toFixed(1)}
+              />
+            </View>
+
+            <View style={styles.climateValue}>
+              <Text style={styles.climateLabel}>Humidity (%):</Text>
+              <SevenSegmentDisplay value={currentClimate.humidity.toFixed(1)} />
+            </View>
+          </View>
+        )}
       </View>
     </Surface>
   );
@@ -190,5 +214,18 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     marginVertical: 8,
+  },
+
+  climateContainer: {
+    marginTop: 16,
+    alignItems: "center",
+  },
+  climateValue: {
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  climateLabel: {
+    fontSize: 16,
+    marginBottom: 4,
   },
 });
