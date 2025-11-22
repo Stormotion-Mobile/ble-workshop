@@ -12,6 +12,9 @@ import {
 import { View } from "react-native";
 import { Climate, DeviceHelper } from "@/ble/DeviceHelper";
 import { SevenSegmentDisplay } from "@/components/SevenSegmentDisplay";
+import { Subscription } from "react-native-ble-plx";
+import { convertTemperature, TemperatureUnit } from "@/utils/unit";
+import { BatteryIndicator } from "@/components/BatteryIndicator";
 
 export default function DeviceScreen() {
   const { id, name, mac } = useLocalSearchParams();
@@ -20,7 +23,11 @@ export default function DeviceScreen() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const climateNotificationSubscription = useRef<Subscription | null>(null);
+
   const [currentClimate, setCurrentClimate] = useState<Climate | null>(null);
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+  const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>("c");
 
   const connectedDevice = useRef<DeviceHelper | null>(null);
 
@@ -34,14 +41,34 @@ export default function DeviceScreen() {
       const device = await DeviceHelper.connectToDeviceById(id as string);
       console.log("Connected to device:", device);
 
-      const climate = await device.readClimate();
+      const batteryLeve = await device.readBatteryLevel();
+      console.log("Battery Level:", batteryLeve);
+      setBatteryLevel(batteryLeve || 0);
 
+      const unit = await device.readTemperatureUnit();
+      console.log("Temperature Unit:", unit);
+      setTemperatureUnit(unit || "c");
+
+      const climate = await device.readClimate();
       console.log("Climate data:", climate);
 
       setIsConnected(true);
       connectedDevice.current = device;
 
       setCurrentClimate(climate || null);
+
+      const climateSubscription = device.setClimateNotification(
+        (climateData) => {
+          console.log("Received climate notification:", climateData);
+          setCurrentClimate(climateData);
+        },
+      );
+
+      if (climateSubscription) {
+        climateNotificationSubscription.current = climateSubscription;
+      } else {
+        console.warn("Climate notification subscription failed");
+      }
     } catch (err) {
       console.error("Connection error:", err);
       setError(
@@ -56,17 +83,32 @@ export default function DeviceScreen() {
     if (!id) return;
 
     try {
+      climateNotificationSubscription.current?.remove();
       await connectedDevice.current?.disconnect();
       setIsConnected(false);
     } catch (err) {
       console.error("Disconnection error:", err);
     } finally {
+      climateNotificationSubscription.current = null;
       connectedDevice.current = null;
+      setCurrentClimate(null);
     }
   }, [id]);
 
+  const writeTemperatureUnit = useCallback(async (unit: TemperatureUnit) => {
+    if (!connectedDevice.current) return;
+
+    try {
+      await connectedDevice.current.setTemperatureUnit(unit);
+      setTemperatureUnit(unit);
+    } catch (err) {
+      console.error("Failed to set temperature unit:", err);
+    }
+  }, []);
+
   useEffect(() => {
     return () => {
+      climateNotificationSubscription.current?.remove();
       connectedDevice.current?.disconnect();
     };
   }, []);
@@ -149,17 +191,52 @@ export default function DeviceScreen() {
 
         {currentClimate && (
           <View style={styles.climateContainer}>
+            {batteryLevel !== null && (
+              <View style={styles.batteryContainer}>
+                <BatteryIndicator level={batteryLevel} height={20} width={40} />
+              </View>
+            )}
+
             <Text variant="titleMedium">Current Climate Data:</Text>
             <View style={styles.climateValue}>
-              <Text style={styles.climateLabel}>Temperature (°C):</Text>
+              <Text
+                style={styles.climateLabel}
+              >{`Temperature (°${temperatureUnit.toUpperCase()}):`}</Text>
               <SevenSegmentDisplay
-                value={currentClimate.temperature.toFixed(1)}
+                value={convertTemperature(
+                  currentClimate.temperature,
+                  temperatureUnit,
+                ).toFixed(1)}
+                segmentOnColor={"#FF6D00"}
+                segmentOffColor={"#2A2A2A"}
               />
             </View>
 
             <View style={styles.climateValue}>
               <Text style={styles.climateLabel}>Humidity (%):</Text>
-              <SevenSegmentDisplay value={currentClimate.humidity.toFixed(1)} />
+              <SevenSegmentDisplay
+                value={currentClimate.humidity.toFixed(1)}
+                segmentOnColor={"#00E0A8"}
+                segmentOffColor={"#2A2A2A"}
+              />
+            </View>
+
+            <Text style={styles.climateLabel}>Temperature Unit:</Text>
+
+            <View style={styles.unitToggleContainer}>
+              <Button
+                mode={temperatureUnit === "c" ? "contained" : "outlined"}
+                onPress={() => writeTemperatureUnit("c")}
+                style={{ marginRight: 8 }}
+              >
+                °C
+              </Button>
+              <Button
+                mode={temperatureUnit === "f" ? "contained" : "outlined"}
+                onPress={() => writeTemperatureUnit("f")}
+              >
+                °F
+              </Button>
             </View>
           </View>
         )}
@@ -223,9 +300,25 @@ const styles = StyleSheet.create({
   climateValue: {
     alignItems: "center",
     marginBottom: 12,
+    color: "#ffffff",
   },
   climateLabel: {
+    alignSelf: "center",
     fontSize: 16,
     marginBottom: 4,
+    color: "#ffffff",
+  },
+
+  batteryContainer: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+  },
+
+  unitToggleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
   },
 });

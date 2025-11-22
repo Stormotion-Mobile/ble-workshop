@@ -3,7 +3,10 @@ import { bleManagerHelper } from "./BleManagerHelper";
 import {
   decodeBatteryLevelData,
   decodeTemperatureData,
+  decodeTemperatureUnitData,
+  encodeTemperatureUnitData,
 } from "@/utils/dataDecoding";
+import { TemperatureUnit } from "@/utils/unit";
 
 export const BATTERY_SERVICE = "180f";
 export const BATTERY_LEVEL_CHARACTERISTIC = "2a19";
@@ -11,6 +14,9 @@ export const BATTERY_LEVEL_CHARACTERISTIC = "2a19";
 export const TEMPERATURE_SERVICE = "ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6";
 export const TEMPERATURE_CHARACTERISTIC =
   "ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6";
+
+export const TEMPERATURE_UNIT_CHARACTERISTIC =
+  "ebe0ccbe-7a0a-4b0c-8a1a-6ff2997da3a6";
 
 export type Climate = {
   temperature: number;
@@ -41,7 +47,7 @@ export class DeviceHelper {
 
   async disconnect(): Promise<void> {
     if (!this.device) {
-      console.error("No device to disconnect from");
+      console.log("No device to disconnect from");
       return;
     }
 
@@ -49,7 +55,7 @@ export class DeviceHelper {
       await bleManagerHelper.cancelDeviceConnection(this.device.id);
       this.device = null;
     } catch (error) {
-      console.error("Failed to disconnect:", error);
+      console.log("Failed to disconnect:", error);
     }
   }
 
@@ -57,12 +63,12 @@ export class DeviceHelper {
     return (await this.device?.isConnected()) ?? false;
   }
 
-  async readBatteryLevel(): Promise<string | null | undefined> {
+  async readBatteryLevel(): Promise<number | null | undefined> {
     try {
       const isConnected = await this.isConnected();
 
       if (!isConnected) {
-        console.error("Device is not connected");
+        console.log("Device is not connected");
         return null;
       }
 
@@ -72,15 +78,13 @@ export class DeviceHelper {
       );
 
       if (!characteristic?.value) {
-        console.error(
-          "Battery level characteristic value is null or undefined",
-        );
+        console.log("Battery level characteristic value is null or undefined");
         return null;
       }
 
-      return decodeBatteryLevelData(characteristic.value)?.toString();
+      return decodeBatteryLevelData(characteristic.value);
     } catch (error) {
-      console.error("Failed to read battery level:", error);
+      console.log("Failed to read battery level:", error);
 
       return null;
     }
@@ -91,7 +95,7 @@ export class DeviceHelper {
       const isConnected = await this.isConnected();
 
       if (!isConnected) {
-        console.error("Device is not connected");
+        console.log("Device is not connected");
         return null;
       }
 
@@ -101,14 +105,14 @@ export class DeviceHelper {
       );
 
       if (!characteristic?.value) {
-        console.error("Temperature characteristic value is null or undefined");
+        console.log("Temperature characteristic value is null or undefined");
         return null;
       }
 
       const decodedData = decodeTemperatureData(characteristic.value);
 
       if (!decodedData) {
-        console.error("Failed to decode temperature data");
+        console.log("Failed to decode temperature data");
         return null;
       }
 
@@ -116,7 +120,7 @@ export class DeviceHelper {
 
       return { temperature, humidity };
     } catch (error) {
-      console.error("Failed to read temperature:", error);
+      console.log("Failed to read temperature:", error);
       return null;
     }
   }
@@ -130,16 +134,13 @@ export class DeviceHelper {
         TEMPERATURE_CHARACTERISTIC,
         (error, characteristic) => {
           if (error) {
-            console.error(
-              "Failed to monitor temperature characteristic:",
-              error,
-            );
+            console.log("Failed to monitor temperature characteristic:", error);
             callback(null);
             return;
           }
 
           if (!characteristic?.value) {
-            console.error(
+            console.log(
               "Temperature characteristic value is null or undefined",
             );
             callback(null);
@@ -149,7 +150,7 @@ export class DeviceHelper {
           const decodedData = decodeTemperatureData(characteristic.value);
 
           if (!decodedData) {
-            console.error("Failed to decode temperature data");
+            console.log("Failed to decode temperature data");
             callback(null);
             return;
           }
@@ -160,12 +161,57 @@ export class DeviceHelper {
         },
       );
     } catch (error) {
-      console.error("Failed to set temperature notification:", error);
+      console.log("Failed to set temperature notification:", error);
       callback(null);
     }
   }
 
-  // async readUnit(): Promise<"c" | "f" | null | undefined> {}
+  async readTemperatureUnit(): Promise<TemperatureUnit | null | undefined> {
+    try {
+      const isConnected = await this.isConnected();
 
-  // async setUnit(unit: "c" | "f"): Promise<void> {}
+      if (!isConnected) {
+        console.log("Device is not connected");
+        return null;
+      }
+
+      const characteristic = await this.device?.readCharacteristicForService(
+        TEMPERATURE_SERVICE,
+        TEMPERATURE_UNIT_CHARACTERISTIC,
+      );
+
+      if (!characteristic?.value) {
+        console.log(
+          "Temperature unit characteristic value is null or undefined",
+        );
+        return null;
+      }
+
+      return decodeTemperatureUnitData(characteristic.value);
+    } catch (error) {
+      console.log("Failed to read temperature unit:", error);
+      return null;
+    }
+  }
+
+  async setTemperatureUnit(unit: TemperatureUnit): Promise<void> {
+    try {
+      const isConnected = await this.isConnected();
+
+      if (!isConnected) {
+        console.log("Device is not connected");
+        return;
+      }
+
+      const base64Value = encodeTemperatureUnitData(unit);
+
+      await this.device?.writeCharacteristicWithResponseForService(
+        TEMPERATURE_SERVICE,
+        TEMPERATURE_UNIT_CHARACTERISTIC,
+        base64Value,
+      );
+    } catch (error) {
+      console.log("Failed to set temperature unit:", error);
+    }
+  }
 }

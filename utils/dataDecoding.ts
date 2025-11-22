@@ -1,4 +1,5 @@
 import { Buffer } from "buffer";
+import { TemperatureUnit } from "@/utils/unit";
 
 export function base64ToBuffer(base64: string): Buffer {
   return Buffer.from(base64, "base64");
@@ -52,4 +53,25 @@ export function decodeTemperatureData(
   const humidity = data.readUInt8(2);
 
   return [temperature, humidity];
+}
+
+export function decodeTemperatureUnitData(
+  temperatureUnitData: string,
+): TemperatureUnit | null {
+  const data = base64ToBuffer(temperatureUnitData);
+
+  if (data.length < 1) {
+    console.error("Invalid temperature unit data length");
+    return null;
+  }
+
+  const unitByte = data.readUInt8(0);
+
+  return unitByte === 0 ? "c" : "f";
+}
+
+export function encodeTemperatureUnitData(unit: TemperatureUnit): string {
+  const buffer = Buffer.alloc(1);
+  buffer.writeUInt8(unit === "c" ? 0 : 1, 0);
+  return buffer.toString("base64");
 }

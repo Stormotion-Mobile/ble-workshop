@@ -2,10 +2,10 @@ import { useMemo } from "react";
 import { StyleSheet } from "react-native";
 import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { PaperProvider, MD3LightTheme } from "react-native-paper";
+import { PaperProvider, MD3DarkTheme } from "react-native-paper";
 
 export default function RootLayout() {
-  const theme = MD3LightTheme;
+  const theme = MD3DarkTheme;
 
   const backgroundStyle = useMemo(
     () => ({
