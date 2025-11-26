@@ -22,7 +22,12 @@ yarn expo prebuild --platform ios
 ``
 
 Далі відкрийте проект у Android Studio або Xcode та запустіть додаток на реальному пристрої, емулятори не підтримують BLE.
+
 Для iOS треба змінити Bundle Identifier у Xcode на унікальний, та обрати персональний Development Team.
+
+Якщо Anroid Studio відмовляється збирати проект, скоріше за все вона собі виставила JDK 21.
+Необхідно виставити JDK 17 у налаштуваннях:
+`Settings -> Build, Execution, Deployment -> Build Tools -> Gradle -> Gradle JDK`
 
 3. Не погано було б також мати Nrf Connect на вашому телефоні для тестування.
 Це додаток, який дозволяє шукати та взаємодіяти з BLE пристроями.
