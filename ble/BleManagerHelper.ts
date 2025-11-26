@@ -19,7 +19,7 @@ class BleManagerHelper {
   startScan(onDeviceFoundCallback: (device: Device | null) => void) {
     this.manager
       .startDeviceScan(
-        [FULL_DEVICE_ADVERTISEMENT_SERVICE],
+        [],
         {
           allowDuplicates: false,
           scanMode: ScanMode.LowLatency,
