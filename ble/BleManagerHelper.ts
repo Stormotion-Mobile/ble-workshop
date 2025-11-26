@@ -1,9 +1,4 @@
-import {
-  BleManager,
-  ConnectionOptions,
-  Device,
-  ScanMode,
-} from "react-native-ble-plx";
+import { BleManager, ConnectionOptions, Device } from "react-native-ble-plx";
 
 const DEVICE_NAME = "LYWSD03MMC";
 const DEVICE_ADVERTISEMENT_SERVICE = "fe95"; // Xiaomi's service ID, full ID is 0000fe95-0000-1000-8000-00805f9b34fb
@@ -17,61 +12,22 @@ class BleManagerHelper {
   }
 
   startScan(onDeviceFoundCallback: (device: Device | null) => void) {
-    this.manager
-      .startDeviceScan(
-        [],
-        {
-          allowDuplicates: false,
-          scanMode: ScanMode.LowLatency,
-        },
-        (error, device) => {
-          if (error) {
-            console.error("BLE scan error", error);
-
-            return;
-          }
-
-          if (device?.name !== DEVICE_NAME) {
-            return;
-          }
-
-          onDeviceFoundCallback(device);
-        },
-      )
-      .then(() => {
-        console.log("Scanning for BLE devices");
-      })
-      .catch((error) => {
-        console.error("Failed to start BLE scan", error);
-      });
+    // TODO: Add device scan
   }
 
   stopScan() {
-    this.manager.stopDeviceScan();
+    // TODO: Stop device scan
   }
 
   async connectToDevice(
     deviceId: string,
     options?: ConnectionOptions,
   ): Promise<Device> {
-    try {
-      const device = await this.manager.connectToDevice(deviceId, options);
-      console.log("Connected to device:", device.id);
-      return device;
-    } catch (error) {
-      console.error("Failed to connect to device", error);
-      throw error;
-    }
+    // TODO: Connect to device by ID
   }
 
   async cancelDeviceConnection(deviceId: string): Promise<void> {
-    try {
-      await this.manager.cancelDeviceConnection(deviceId);
-      console.log("Cancelled connection to device:", deviceId);
-    } catch (error) {
-      console.error("Failed to cancel device connection", error);
-      throw error;
-    }
+    // TODO: Disconnect from device
   }
 }
 

@@ -1,11 +1,5 @@
 import { ConnectionOptions, Device, Subscription } from "react-native-ble-plx";
 import { bleManagerHelper } from "./BleManagerHelper";
-import {
-  decodeBatteryLevelData,
-  decodeTemperatureData,
-  decodeTemperatureUnitData,
-  encodeTemperatureUnitData,
-} from "@/utils/dataDecoding";
 import { TemperatureUnit } from "@/utils/unit";
 
 export const BATTERY_SERVICE = "180f";
@@ -72,17 +66,7 @@ export class DeviceHelper {
         return null;
       }
 
-      const characteristic = await this.device?.readCharacteristicForService(
-        BATTERY_SERVICE,
-        BATTERY_LEVEL_CHARACTERISTIC,
-      );
-
-      if (!characteristic?.value) {
-        console.log("Battery level characteristic value is null or undefined");
-        return null;
-      }
-
-      return decodeBatteryLevelData(characteristic.value);
+      // TODO: Read and decode battery level characteristic
     } catch (error) {
       console.log("Failed to read battery level:", error);
 
@@ -99,26 +83,7 @@ export class DeviceHelper {
         return null;
       }
 
-      const characteristic = await this.device?.readCharacteristicForService(
-        TEMPERATURE_SERVICE,
-        TEMPERATURE_CHARACTERISTIC,
-      );
-
-      if (!characteristic?.value) {
-        console.log("Temperature characteristic value is null or undefined");
-        return null;
-      }
-
-      const decodedData = decodeTemperatureData(characteristic.value);
-
-      if (!decodedData) {
-        console.log("Failed to decode temperature data");
-        return null;
-      }
-
-      const [temperature, humidity] = decodedData;
-
-      return { temperature, humidity };
+      // TODO: Read and decode temperature characteristic
     } catch (error) {
       console.log("Failed to read temperature:", error);
       return null;
@@ -129,37 +94,7 @@ export class DeviceHelper {
     callback: (data: Climate | null) => void,
   ): Subscription | undefined | null {
     try {
-      return this.device?.monitorCharacteristicForService(
-        TEMPERATURE_SERVICE,
-        TEMPERATURE_CHARACTERISTIC,
-        (error, characteristic) => {
-          if (error) {
-            console.log("Failed to monitor temperature characteristic:", error);
-            callback(null);
-            return;
-          }
-
-          if (!characteristic?.value) {
-            console.log(
-              "Temperature characteristic value is null or undefined",
-            );
-            callback(null);
-            return;
-          }
-
-          const decodedData = decodeTemperatureData(characteristic.value);
-
-          if (!decodedData) {
-            console.log("Failed to decode temperature data");
-            callback(null);
-            return;
-          }
-
-          const [temperature, humidity] = decodedData;
-
-          callback({ temperature, humidity });
-        },
-      );
+      // TODO: Set up notification for temperature characteristic
     } catch (error) {
       console.log("Failed to set temperature notification:", error);
       callback(null);
@@ -175,19 +110,7 @@ export class DeviceHelper {
         return null;
       }
 
-      const characteristic = await this.device?.readCharacteristicForService(
-        TEMPERATURE_SERVICE,
-        TEMPERATURE_UNIT_CHARACTERISTIC,
-      );
-
-      if (!characteristic?.value) {
-        console.log(
-          "Temperature unit characteristic value is null or undefined",
-        );
-        return null;
-      }
-
-      return decodeTemperatureUnitData(characteristic.value);
+      // TODO: Read and decode temperature unit characteristic
     } catch (error) {
       console.log("Failed to read temperature unit:", error);
       return null;
@@ -203,13 +126,7 @@ export class DeviceHelper {
         return;
       }
 
-      const base64Value = encodeTemperatureUnitData(unit);
-
-      await this.device?.writeCharacteristicWithResponseForService(
-        TEMPERATURE_SERVICE,
-        TEMPERATURE_UNIT_CHARACTERISTIC,
-        base64Value,
-      );
+      // TODO: Encode and write temperature unit characteristic
     } catch (error) {
       console.log("Failed to set temperature unit:", error);
     }
