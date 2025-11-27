@@ -68,8 +68,9 @@ export default function Index() {
       stopScan();
 
       router.push({
-        pathname: `/device/${id}`,
+        pathname: `/device/[id]`,
         params: {
+          id,
           name: name || "Unknown",
           mac: mac,
         },
